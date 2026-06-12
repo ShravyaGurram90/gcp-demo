@@ -37,8 +37,8 @@ steps:
 
 substitutions:
   _SERVICE_NAME: gcp-demo
-  _GKE_CLUSTER: your-gke-cluster
-  _GKE_LOCATION: us-central1
+  _GKE_CLUSTER: gke-application-demo-cluster
+  _GKE_LOCATION: asia-southeast1-a
   _K8S_NAMESPACE: default
   _CONTAINER_PORT: '8080'
 
