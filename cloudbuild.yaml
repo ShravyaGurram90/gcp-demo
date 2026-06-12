@@ -40,7 +40,7 @@ substitutions:
   _GKE_CLUSTER: gke-application-demo-cluster
   _GKE_LOCATION: asia-southeast1-a
   _K8S_NAMESPACE: default
-  _CONTAINER_PORT: '8080'
+  _CONTAINER_PORT: '8008'
 
 options:
   logging: CLOUD_LOGGING_ONLY
