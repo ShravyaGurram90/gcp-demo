@@ -9,17 +9,39 @@ steps:
   # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA']
-  # Deploy container image to Cloud Run
+
+  # Deploy container image to GKE
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
+    entrypoint: 'bash'
     args:
-      - 'run'
-      - 'deploy'
-      - '$_SERVICE_NAME'
-      - '--image'
-      - 'gcr.io/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
-      - '--region'
-      - '$_DEPLOY_REGION'
+      - '-c'
+      - |
+        gcloud container clusters get-credentials "$_GKE_CLUSTER" --region "$_GKE_LOCATION" --project "$PROJECT_ID"
+
+        kubectl create namespace "$_K8S_NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
+
+        kubectl create deployment "$_SERVICE_NAME" \
+          --image="gcr.io/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA" \
+          --port="$_CONTAINER_PORT" \
+          --namespace="$_K8S_NAMESPACE" \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+        kubectl expose deployment "$_SERVICE_NAME" \
+          --type=LoadBalancer \
+          --port=80 \
+          --target-port="$_CONTAINER_PORT" \
+          --namespace="$_K8S_NAMESPACE" \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+        kubectl rollout status deployment/"$_SERVICE_NAME" --namespace="$_K8S_NAMESPACE"
+
+substitutions:
+  _SERVICE_NAME: gcp-demo
+  _GKE_CLUSTER: your-gke-cluster
+  _GKE_LOCATION: us-central1
+  _K8S_NAMESPACE: default
+  _CONTAINER_PORT: '8080'
+
 options:
   logging: CLOUD_LOGGING_ONLY
 
